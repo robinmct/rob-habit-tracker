@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign In • Habit Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+:root{--bg:#0f172a;--card:#111827;--text:#e5e7eb;--muted:#94a3b8;--ring:#3b82f6}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0f172a,#111827);color:var(--text);font:500 16px/1.4 'Quicksand',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-card{background:#0c1526;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;width:min(360px,92vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.login-card h1{margin:0 0 4px 0;font-size:22px}
+.login-card input{all:unset;background:#0b1220;border:1px solid rgba(255,255,255,.08);padding:10px 12px;border-radius:10px;color:var(--text)}
+.login-card .actions{display:flex;flex-direction:column;gap:8px}
+.login-card button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+.login-card button:hover{transform:translateY(-1px);background:#0e1628}
+.login-card .muted{color:var(--muted);font-size:12px;min-height:16px}
+.login-card a{color:#93c5fd;text-decoration:none}
+.login-card a:hover{text-decoration:underline}
+button,input,select,textarea{font-family:inherit}
+.login-card input:focus{border-color:rgba(147,197,253,.6);box-shadow:0 0 0 2px rgba(59,130,246,.25)}
+.login-card.error{animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);background:#0c1526;border:1px solid rgba(255,255,255,.08);color:var(--text);padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s opacity,.25s transform;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:14px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.login-card button:active{transform:translateY(0);scale:.98}
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1>Sign In</h1>
+  <div id="gateStatus" class="muted"></div>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <div class="actions">
+    <button id="emailSignIn">Sign in</button>
+    <button id="googleLogin">Sign in with Google</button>
+  </div>
+  <div class="muted">New here? <a href="register.html">Create Account Here</a></div>
+</div>
+<div id="toast" class="toast" role="alert" aria-live="polite"></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script>
+const FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+  apiKey: "AIzaSyAwxkDFl2RkAowEauD9-G72F3ZbEgQSgs4",
+  authDomain: "habit-tracker-71b2e.firebaseapp.com",
+  projectId: "habit-tracker-71b2e",
+  storageBucket: "habit-tracker-71b2e.firebasestorage.app",
+  messagingSenderId: "22045425557",
+  appId: "1:22045425557:web:53f800e6b16ebc44ad009c",
+  measurementId: "G-B3QKE7EHY5"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth=firebase.auth();
+const gateStatus=document.getElementById('gateStatus');
+const emailInput=document.getElementById('email');
+const passInput=document.getElementById('password');
+const emailSignInBtn=document.getElementById('emailSignIn');
+const googleLoginBtn=document.getElementById('googleLogin');
+const toastEl=document.getElementById('toast');
+const card=document.querySelector('.login-card');
+
+function mapAuthError(err){const code=(err&&err.code)||'';switch(code){
+  case 'auth/invalid-email': return 'Invalid email format';
+  case 'auth/user-not-found': return 'No account found for this email';
+  case 'auth/wrong-password': return 'Password incorrect';
+  case 'auth/weak-password': return 'Password is too weak';
+  case 'auth/email-already-in-use': return 'Email already in use';
+  case 'auth/network-request-failed': return 'Network error, try again';
+  case 'auth/too-many-requests': return 'Too many attempts, please wait';
+  case 'auth/invalid-credential': return 'Sign-in credential expired or invalid. Please try again';
+  case 'auth/popup-closed-by-user': return 'Sign-in was cancelled';
+  case 'auth/popup-blocked': return 'Popup blocked, allow popups';
+  default: return (err&&err.message)||'Something went wrong';
+}}
+function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>{toastEl.classList.remove('show')},4000)}
+function showFail(err){const msg=mapAuthError(err);gateStatus.textContent=msg;showToast(msg);card.classList.add('error');setTimeout(()=>card.classList.remove('error'),300)}
+
+emailSignInBtn.onclick=()=>{const email=(emailInput.value||'').trim();const pass=passInput.value||'';auth.signInWithEmailAndPassword(email,pass).catch(err=>{console.error('Email sign-in failed:',err);showFail(err)})};
+googleLoginBtn.onclick=()=>{const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});auth.useDeviceLanguage();auth.signInWithPopup(provider).catch(err=>{console.error('Google sign-in failed:',err);showFail(err)})};
+
+auth.onAuthStateChanged(u=>{ if(u){ window.location.href='index.html'; } });
+</script>
+</body>
+</html>

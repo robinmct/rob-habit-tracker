@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Habit Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+:root{--bg:#0f172a;--card:#111827;--text:#e5e7eb;--muted:#94a3b8;--green:#22c55e;--red:#ef4444;--ring:#3b82f6}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0f172a,#111827);color:var(--text);font:500 16px/1.4 'Quicksand',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;flex-direction:column;align-items:center}
+header{padding:16px 16px;font-weight:700;font-size:22px;letter-spacing:.3px;width:100%;max-width:920px;display:flex;justify-content:space-between;align-items:center}
+header .title{padding:4px 0}
+header .auth{display:flex;gap:8px;align-items:center}
+header .auth #user{color:var(--muted);font-size:14px}
+header .auth #status{color:var(--muted);font-size:12px;margin-right:8px}
+header .auth button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+header .auth button:hover{transform:translateY(-1px);background:#0e1628}
+.app{width:min(920px,100%);padding:16px}
+.card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden}
+.nav{display:flex;align-items:center;gap:8px;padding:14px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.nav button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+.nav button:hover{transform:translateY(-1px);background:#0e1628}
+.nav .label{flex:1;text-align:center;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:14px}
+.week{color:var(--muted);text-align:center;font-size:12px}
+.day{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;user-select:none;background:#0b1220;transition:.2s transform,.2s background,.2s border-color;position:relative}
+.day:hover{transform:translateY(-2px)}
+.day .num{position:absolute;top:6px;left:8px;color:var(--muted);font-size:12px}
+.day.done{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+.day.done .mark{color:var(--green)}
+.day.miss{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
+.day.miss .mark{color:var(--red)}
+.today{outline:2px solid var(--ring);outline-offset:0}
+.mark{font-size:24px}
+.dash{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:14px;border-top:1px solid rgba(255,255,255,.06);background:#0b1220}
+.stat{background:#0c1526;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.stat .t{color:var(--muted);font-size:12px}
+.stat .v{font-size:22px;font-weight:700;transition:color .2s}
+.stat.good .v{color:var(--green)}.stat.bad .v{color:var(--red)}
+.menu{position:fixed;inset:auto auto 0 0;transform:translate(-1000px,-1000px);background:#0c1526;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:6px;display:grid;gap:6px;z-index:50;min-width:160px}
+.menu button{all:unset;font-family:inherit;cursor:pointer;padding:8px 10px;border-radius:8px;color:var(--text)}
+.menu button:hover{background:#0e182b}
+@media (max-width:720px){.dash{grid-template-columns:repeat(2,1fr)}.nav .label{font-size:18px}.mark{font-size:20px}}
+button,input,select,textarea{font-family:inherit}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);background:#0c1526;border:1px solid rgba(255,255,255,.08);color:var(--text);padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s opacity,.25s transform;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:14px;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.day:active{transform:translateY(0) scale(.98)}
+.stat{transition:.18s transform,.18s background}
+.stat:hover{transform:translateY(-2px);background:#0e1628}
+.nav button:active,header .auth button:active{transform:translateY(0);scale:.98}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">Habit Tracker</div>
+  <div class="auth">
+    <div id="status"></div>
+    <div id="user"></div>
+    <button id="login">Sign in with Google</button>
+    <button id="logout" style="display:none">Sign out</button>
+  </div>
+</header>
+<div class="app card">
+  <div class="nav"><button id="prev">◀</button><div class="label" id="label"></div><button id="next">▶</button></div>
+  <div class="grid" id="grid"></div>
+  <div class="dash">
+    <div class="stat good"><div class="t">Successful days ✅</div><div class="v" id="doneV">0</div></div>
+    <div class="stat bad"><div class="t">Missed days ❌</div><div class="v" id="missV">0</div></div>
+    <div class="stat"><div class="t">Longest streak</div><div class="v" id="longV">0</div></div>
+    <div class="stat"><div class="t">Current streak</div><div class="v" id="currV">0</div></div>
+    <div class="stat"><div class="t">Success rate</div><div class="v" id="rateV">0%</div></div>
+  </div>
+</div>
+<div class="menu" id="menu"><button data-act="done">Mark done ✅</button><button data-act="miss">Mark missed ❌</button><button data-act="clear">Clear</button></div>
+<div id="toast" class="toast" role="alert" aria-live="polite"></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script>
+// --- Firebase Config ---
+// Paste your Firebase project's config here or set window.FIREBASE_CONFIG before loading this page
+const FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
+  apiKey: "AIzaSyAwxkDFl2RkAowEauD9-G72F3ZbEgQSgs4",
+  authDomain: "habit-tracker-71b2e.firebaseapp.com",
+  projectId: "habit-tracker-71b2e",
+  storageBucket: "habit-tracker-71b2e.firebasestorage.app",
+  messagingSenderId: "22045425557",
+  appId: "1:22045425557:web:53f800e6b16ebc44ad009c",
+  measurementId: "G-B3QKE7EHY5"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+let fs = null;
+let user = null; let remoteMonth = {}; let monthUnsub = null;
+
+// --- App State & DOM ---
+const k='habitTracker.v1';const fmt=(y,m)=>y+'-'+String(m).padStart(2,'0');
+const now=new Date();let view=new Date(now.getFullYear(),now.getMonth(),1);
+const grid=document.getElementById('grid'),label=document.getElementById('label');
+const doneV=document.getElementById('doneV'),missV=document.getElementById('missV'),longV=document.getElementById('longV'),currV=document.getElementById('currV'),rateV=document.getElementById('rateV');
+const menu=document.getElementById('menu');let menuDay=null;
+const loginBtn=document.getElementById('login');const logoutBtn=document.getElementById('logout');const userEl=document.getElementById('user');
+const statusEl=document.getElementById('status');
+
+// --- Local storage helpers (fallback when signed out) ---
+function load(){try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return {}}}
+function save(d){localStorage.setItem(k,JSON.stringify(d))}
+let db=load();
+
+// --- Data access helpers ---
+function getMonthData(y,m){
+  if(!user) return {};
+  return remoteMonth;
+}
+
+function setMark(day,val){
+  if(user){
+    const key=fmt(view.getFullYear(),view.getMonth()+1);
+    const ref=fs.collection('users').doc(user.uid).collection('months').doc(key);
+    const prev = remoteMonth[day];
+    if(!val){
+      delete remoteMonth[day];
+    } else {
+      remoteMonth[day]=val;
+    }
+    paintDay(day); stats();
+    // Write complete marks to Firestore to ensure integrity
+    ref.set({ marks: remoteMonth }, { merge: false }).catch(err=>{
+      console.error('Firestore write failed:', err);
+      setStatus(err.code || err.message);
+      // Revert optimistic change on failure
+      if(prev===undefined) { delete remoteMonth[day]; } else { remoteMonth[day]=prev; }
+      paintDay(day); stats();
+    });
+  } else {
+    const md=getMonthData(view.getFullYear(),view.getMonth());
+    if(!val){
+      delete md[day];
+    } else {
+      md[day]=val;
+    }
+    save(db); paintDay(day); stats()
+  }
+}
+
+function paintDay(day){
+  const el=document.querySelector('[data-day="'+day+'"]');if(!el) return;
+  const v=getMonthData(view.getFullYear(),view.getMonth())[day];
+  el.classList.remove('done','miss');el.querySelector('.mark').textContent='';
+  if(v==='done'){el.classList.add('done');el.querySelector('.mark').textContent='✅'}
+  else if(v==='miss'){el.classList.add('miss');el.querySelector('.mark').textContent='❌'}
+}
+
+function animNum(el,to){const from=parseFloat(el.textContent)||0;const isPct=el.textContent.includes('%');let s=0;const step=()=>{s+=1;const v=Math.round(from+(to-from)*Math.min(s/15,1));el.textContent=isPct?v+'%':v; if(s<15) requestAnimationFrame(step)};requestAnimationFrame(step)}
+
+function stats(){const y=view.getFullYear(),m=view.getMonth(),md=getMonthData(y,m);const days=new Date(y,m+1,0).getDate();let done=0,miss=0;for(let d=1;d<=days;d++){if(md[d]==='done')done++;else if(md[d]==='miss')miss++}
+let longest=0,cur=0;for(let d=1;d<=days;d++){if(md[d]==='done'){cur++;if(cur>longest)longest=cur}else cur=0}
+let curr=0;for(let d=days;d>=1;d--){if(md[d]==='done')curr++;else break}
+animNum(doneV,done);animNum(missV,miss);animNum(longV,longest);animNum(currV,curr);animNum(rateV,Math.round((done/days)*100))}
+
+function verifyConsistency(){
+  const y=view.getFullYear(), m=view.getMonth();
+  const days=new Date(y,m+1,0).getDate();
+  const displayed=[];
+  for(let d=1; d<=days; d++){
+    const el=document.querySelector('[data-day="'+d+'"]');
+    if(!el) continue;
+    if(el.classList.contains('done') || el.classList.contains('miss')) displayed.push(d);
+  }
+  const stored=Object.keys(remoteMonth).map(k=>Number(k));
+  const missing=stored.filter(d=>!displayed.includes(d));
+  const extra=displayed.filter(d=>!stored.includes(d));
+  if(missing.length===0 && extra.length===0){ /* in sync */ }
+  else setStatus('Desync: missing '+missing.join(',')+' extra '+extra.join(','));
+}
+
+function subscribeMonth(y,m){
+  if(monthUnsub) monthUnsub();
+  if(!user) return;
+  const key=fmt(y,m+1);
+  const ref=fs.collection('users').doc(user.uid).collection('months').doc(key);
+  monthUnsub = ref.onSnapshot({includeMetadataChanges:true}, snap=>{
+    // Avoid flicker from local pending writes (optimistic updates already handled)
+    if(snap.metadata && snap.metadata.hasPendingWrites) return;
+    const data = snap.exists ? (snap.data() || {}) : {};
+    // Build marks by merging both shapes: map and legacy dot fields
+    let marks = {};
+    if(data.marks && typeof data.marks === 'object') {
+      marks = { ...data.marks };
+    }
+    Object.keys(data).forEach(k=>{
+      if(k.startsWith('marks.')){
+        const day = k.split('.')[1];
+        if(day && marks[day] === undefined) marks[day] = data[k];
+      }
+    });
+    // Replace state with server truth from Firestore
+    remoteMonth = marks;
+    const days=new Date(y,m+1,0).getDate();
+    for(let d=1;d<=days;d++) paintDay(d);
+    stats();
+    verifyConsistency();
+  }, err=>{
+    console.error('Snapshot error:', err);
+    setStatus(err.code || err.message);
+  });
+}
+
+function render(){
+  label.textContent=new Intl.DateTimeFormat('en',{month:'long',year:'numeric'}).format(view);grid.innerHTML='';['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(w=>{const e=document.createElement('div');e.className='week';e.textContent=w;grid.appendChild(e)});
+  const y=view.getFullYear(),m=view.getMonth();const first=new Date(y,m,1).getDay();const days=new Date(y,m+1,0).getDate();for(let i=0;i<first;i++){const s=document.createElement('div');grid.appendChild(s)}
+  for(let d=1;d<=days;d++){const e=document.createElement('div');e.className='day';e.dataset.day=d;e.innerHTML='<span class="num">'+d+'</span><div class="mark"></div>';
+    if(y===now.getFullYear()&&m===now.getMonth()&&d===now.getDate()) e.classList.add('today');
+    e.addEventListener('click',ev=>{ev.preventDefault();const el=ev.currentTarget;const curr=el.classList.contains('done')?'done':(el.classList.contains('miss')?'miss':null);const next=curr==='done'?'miss':(curr==='miss'?null:'done');setMark(d,next)});
+    e.addEventListener('contextmenu',ev=>{ev.preventDefault();menuDay=d;menu.style.transform='translate('+ev.pageX+'px,'+ev.pageY+'px)'});
+    grid.appendChild(e);paintDay(d)}
+  stats();
+  if(user) subscribeMonth(y,m);
+}
+
+// --- Context menu ---
+document.addEventListener('click',e=>{if(!menu.contains(e.target)) menu.style.transform='translate(-1000px,-1000px)'});
+menu.addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;if(a==='done') setMark(menuDay,'done'); else if(a==='miss') setMark(menuDay,'miss'); else setMark(menuDay,null);menu.style.transform='translate(-1000px,-1000px)'});
+
+// --- Nav ---
+document.getElementById('prev').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
+document.getElementById('next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
+
+// --- Auth UI ---
+function updateAuthUI(){ if(user){ loginBtn.style.display='none'; logoutBtn.style.display='inline-block'; userEl.textContent=user.displayName||user.email } else { loginBtn.style.display='inline-block'; logoutBtn.style.display='none'; userEl.textContent='' } }
+const toastEl=document.getElementById('toast');
+function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),4000)}
+function setStatus(msg){ statusEl.textContent=msg||''; if(msg){ showToast(msg); setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, 5000); } }
+// Add mapping so auth errors show friendly messages
+function mapAuthError(err){const code=(err&&err.code)||'';switch(code){
+  case 'auth/invalid-credential': return 'Sign-in credential expired or invalid. Please try again';
+  case 'auth/network-request-failed': return 'Network error, try again';
+  case 'auth/too-many-requests': return 'Too many attempts, please wait';
+  default: return (err&&err.message)||'Something went wrong';
+}}
+loginBtn.onclick=()=>{ window.location.href='login.html' };
+logoutBtn.onclick=()=>{auth.signOut().catch(err=>{console.error('Signout failed:',err);setStatus(mapAuthError(err))})};
+auth.getRedirectResult().then(res=>{ if(res.user) { setStatus('Signed in'); } }).catch(err=>{ console.error('Redirect error:',err); setStatus(mapAuthError(err)) });
+auth.onAuthStateChanged(u=>{ user=u; updateAuthUI(); if(user){ if(!fs){ fs = firebase.firestore(); try{ fs.settings({ experimentalAutoDetectLongPolling: true }); } catch(e){} } render(); } else { window.location.href='login.html'; } });
+
+</script>
+</body>
+</html>

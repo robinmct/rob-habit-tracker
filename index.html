@@ -47,6 +47,26 @@ button,input,select,textarea{font-family:inherit}
 .stat{transition:.18s transform,.18s background}
 .stat:hover{transform:translateY(-2px);background:#0e1628}
 .nav button:active,header .auth button:active{transform:translateY(0);scale:.98}
+/* Month/Year picker */
+.nav .label{cursor:pointer}
+.nav .label:hover{color:var(--muted)}
+.picker{position:fixed;inset:0;display:none;place-items:center;background:rgba(2,8,23,.5);backdrop-filter:blur(2px);z-index:60}
+.picker.show{display:grid}
+.picker .inner{background:#0c1526;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;min-width:320px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);transform:scale(.98);opacity:0;transition:.2s transform,.2s opacity}
+.picker.show .inner{transform:scale(1);opacity:1}
+.picker .head{display:flex;align-items:center;justify-content:space-between}
+.picker .head .h{font-weight:700}
+.picker .head button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:8px;cursor:pointer;transition:.18s transform,.18s background}
+.picker .head button:hover{transform:translateY(-1px);background:#0e1628}
+.picker .months{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.picker .months button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background,.18s border-color}
+.picker .months button:hover{transform:translateY(-1px);background:#0e1628}
+.picker .months button.selected{border-color:rgba(147,197,253,.6)}
+.picker .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.picker select{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px}
+.picker .actions{display:flex;gap:8px;justify-content:flex-end}
+.picker button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+.picker button:hover{transform:translateY(-1px);background:#0e1628}
 </style>
 </head>
 <body>
@@ -71,6 +91,37 @@ button,input,select,textarea{font-family:inherit}
   </div>
 </div>
 <div class="menu" id="menu"><button data-act="done">Mark done ✅</button><button data-act="miss">Mark missed ❌</button><button data-act="clear">Clear</button></div>
+<div class="picker" id="monthPicker" role="dialog" aria-modal="true" aria-label="Select month and year">
+  <div class="inner" id="mpInner">
+    <div class="head"><div class="h">Select month & year</div><button id="mpClose" aria-label="Close">✕</button></div>
+    <div class="months" id="mpMonths">
+      <button data-m="1">Jan</button><button data-m="2">Feb</button><button data-m="3">Mar</button><button data-m="4">Apr</button>
+      <button data-m="5">May</button><button data-m="6">Jun</button><button data-m="7">Jul</button><button data-m="8">Aug</button>
+      <button data-m="9">Sep</button><button data-m="10">Oct</button><button data-m="11">Nov</button><button data-m="12">Dec</button>
+    </div>
+    <div class="row">
+      <select id="mpMonth" aria-label="Month" style="display:none">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="mpYear" aria-label="Year"></select>
+    </div>
+    <div class="actions">
+      <button id="mpApply">Go</button>
+      <button id="mpCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -216,8 +267,50 @@ function render(){
   stats();
   if(user) subscribeMonth(y,m);
 }
-
+// Month/year picker wiring
+const picker=document.getElementById('monthPicker');
+const mpInner=document.getElementById('mpInner');
+const mpMonths=document.getElementById('mpMonths');
+const mpMonth=document.getElementById('mpMonth');
+const mpYear=document.getElementById('mpYear');
+const mpApply=document.getElementById('mpApply');
+const mpCancel=document.getElementById('mpCancel');
+const mpClose=document.getElementById('mpClose');
+function fillYears(){
+  const current=new Date().getFullYear();
+  const start=current-10, end=current+10;
+  mpYear.innerHTML='';
+  for(let y=start; y<=end; y++){
+    const opt=document.createElement('option');
+    opt.value=String(y); opt.textContent=String(y);
+    mpYear.appendChild(opt);
+  }
+}
+function syncMonthButtons(){
+  const sel=String(mpMonth.value);
+  mpMonths.querySelectorAll('button[data-m]').forEach(b=>{
+    b.classList.toggle('selected', b.dataset.m===sel);
+  });
+}
+function openPicker(){
+  fillYears();
+  mpMonth.value=String(view.getMonth()+1);
+  mpYear.value=String(view.getFullYear());
+  picker.classList.add('show');
+  syncMonthButtons();
+  const selected=mpMonths.querySelector('button.selected');
+  (selected||mpYear).focus();
+}
+function closePicker(){ picker.classList.remove('show'); }
+label.addEventListener('click',()=>{ openPicker(); });
+mpMonths.addEventListener('click',(e)=>{ const b=e.target.closest('button[data-m]'); if(!b) return; mpMonth.value=b.dataset.m; syncMonthButtons(); });
+mpApply.addEventListener('click',()=>{ const y=Number(mpYear.value), m=Number(mpMonth.value)-1; view=new Date(y,m,1); closePicker(); render(); });
+mpCancel.addEventListener('click',()=>{ closePicker(); });
+mpClose.addEventListener('click',()=>{ closePicker(); });
+picker.addEventListener('click',(e)=>{ if(!mpInner.contains(e.target)) closePicker(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && picker.classList.contains('show')) closePicker(); });
 // --- Context menu ---
+
 document.addEventListener('click',e=>{if(!menu.contains(e.target)) menu.style.transform='translate(-1000px,-1000px)'});
 menu.addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;if(a==='done') setMark(menuDay,'done'); else if(a==='miss') setMark(menuDay,'miss'); else setMark(menuDay,null);menu.style.transform='translate(-1000px,-1000px)'});
 

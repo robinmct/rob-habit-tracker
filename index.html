@@ -147,6 +147,7 @@ let user = null; let remoteMonth = {}; let monthUnsub = null;
 const k='habitTracker.v1';const fmt=(y,m)=>y+'-'+String(m).padStart(2,'0');
 const now=new Date();let view=new Date(now.getFullYear(),now.getMonth(),1);
 const grid=document.getElementById('grid'),label=document.getElementById('label');
+const titleEl=document.querySelector('header .title');
 const doneV=document.getElementById('doneV'),missV=document.getElementById('missV'),longV=document.getElementById('longV'),currV=document.getElementById('currV'),rateV=document.getElementById('rateV');
 const menu=document.getElementById('menu');let menuDay=null;
 const loginBtn=document.getElementById('login');const logoutBtn=document.getElementById('logout');const userEl=document.getElementById('user');
@@ -205,7 +206,7 @@ function animNum(el,to){const from=parseFloat(el.textContent)||0;const isPct=el.
 
 function stats(){const y=view.getFullYear(),m=view.getMonth(),md=getMonthData(y,m);const days=new Date(y,m+1,0).getDate();let done=0,miss=0;for(let d=1;d<=days;d++){if(md[d]==='done')done++;else if(md[d]==='miss')miss++}
 let longest=0,cur=0;for(let d=1;d<=days;d++){if(md[d]==='done'){cur++;if(cur>longest)longest=cur}else cur=0}
-let curr=0;for(let d=days;d>=1;d--){if(md[d]==='done')curr++;else break}
+let curr=0;const endDay=(y===now.getFullYear()&&m===now.getMonth())?now.getDate():days;for(let d=endDay;d>=1;d--){if(md[d]==='done'){curr++;}else{break}}
 animNum(doneV,done);animNum(missV,miss);animNum(longV,longest);animNum(currV,curr);animNum(rateV,Math.round((done/days)*100))}
 
 function verifyConsistency(){
@@ -319,7 +320,7 @@ document.getElementById('prev').onclick=()=>{view=new Date(view.getFullYear(),vi
 document.getElementById('next').onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
 
 // --- Auth UI ---
-function updateAuthUI(){ if(user){ loginBtn.style.display='none'; logoutBtn.style.display='inline-block'; userEl.textContent=user.displayName||user.email } else { loginBtn.style.display='inline-block'; logoutBtn.style.display='none'; userEl.textContent='' } }
+function updateAuthUI(){ if(user){ loginBtn.style.display='none'; logoutBtn.style.display='inline-block'; userEl.textContent=user.displayName||user.email; const dn=(user.displayName||'').trim(); const first= dn? dn.split(/\s+/)[0] : (user.email? user.email.split('@')[0] : ''); titleEl.textContent= first? (first+"'"+'s Habit Tracker') : 'Habit Tracker'; } else { loginBtn.style.display='inline-block'; logoutBtn.style.display='none'; userEl.textContent=''; titleEl.textContent='Habit Tracker'; } }
 const toastEl=document.getElementById('toast');
 function showToast(msg){toastEl.textContent=msg;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),4000)}
 function setStatus(msg){ statusEl.textContent=msg||''; if(msg){ showToast(msg); setTimeout(()=>{ if(statusEl.textContent===msg) statusEl.textContent=''; }, 5000); } }

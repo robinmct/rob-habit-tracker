@@ -1,16 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Habit Tracker</title>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="/styles.css">
-<style>
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 :root{--bg:#0f172a;--card:#111827;--text:#e5e7eb;--muted:#94a3b8;--green:#22c55e;--red:#ef4444;--ring:#3b82f6}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0b1220 0%,#0f172a 50%,#0b1220 100%);color:var(--text);font:500 16px/1.4 'Quicksand',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;flex-direction:column;align-items:center}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#0b1220 0%,#0f172a 50%,#0b1220 100%);color:var(--text);font:500 16px/1.4 'Quicksand',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;display:flex;flex-direction:column;align-items:center}
+/* Auth pages layout override */
+body.auth{justify-content:center;min-height:100vh}
 header{padding:16px 16px;font-weight:700;font-size:22px;letter-spacing:.3px;width:100%;max-width:920px;display:flex;justify-content:space-between;align-items:center}
 header .title{padding:4px 0}
 header .auth{display:flex;gap:8px;align-items:center}
@@ -79,11 +72,6 @@ button,input,select,textarea{font-family:inherit}
 .sidebar .list{display:flex;flex-direction:column;gap:8px}
 .habit{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.06);position:relative}
 .habit:hover{background:#0e1628}
-.habit.selected{background:#0e1628;border-color:rgba(147,197,253,.45);box-shadow:0 0 0 2px rgba(59,130,246,.25) inset}
-.habit.selected .name{color:var(--text)}
-.habit.selected .dot{box-shadow:0 0 0 2px rgba(147,197,253,.5)}
-.habit.selected .mini{border-color:rgba(147,197,253,.5)}
-.habit.selected .mini .bar{background:#60a5fa;box-shadow:0 0 8px rgba(147,197,253,.35)}
 .habit .dot{width:10px;height:10px;border-radius:50%}
 .habit .name{flex:1}
 .habit .mini{height:6px;background:#0b1220;border:1px solid rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
@@ -103,10 +91,10 @@ button,input,select,textarea{font-family:inherit}
 .day .prog{position:absolute;bottom:6px;left:8px;right:8px;height:6px;border-radius:4px;background:#0b1220;border:1px solid rgba(255,255,255,.08);overflow:hidden}
 .day .prog .bar{height:100%;background:#93c5fd;width:0%}
 .day .val{position:absolute;left:50%;top:50%;transform:translate(-50%,-40%);font-size:13px;color:var(--text);opacity:.9;pointer-events:none}
-/* Add Habit modal */
+/* Modals */
 .habit-modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(2,8,23,.5);backdrop-filter:blur(2px);z-index:70}
 .habit-modal.show{display:grid}
-.habit-modal .inner{background:#0c1526;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;min-width:320px;display:flex;flex-direction:column;gap:12px;box-shadow:0 16px 48px rgba(0,0,0,.55)}
+.habit-modal .inner{background:#0c1526;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;min-width:320px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .habit-modal .head{display:flex;align-items:center;justify-content:space-between}
 .habit-modal .head .h{font-weight:700}
 .habit-modal .head button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:8px;cursor:pointer}
@@ -118,199 +106,71 @@ button,input,select,textarea{font-family:inherit}
 .habit-modal input,.habit-modal select{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;width:100%}
 .habit-modal .fields{display:flex;flex-direction:column;gap:8px}
 .habit-modal .row{display:flex;gap:8px;align-items:center}
-</style>
-</head>
-<body>
-<header>
-  <div class="title">Habit Tracker</div>
-  <div class="auth">
-    <div id="status"></div>
-    <div id="user"></div>
-    <button id="login">Sign in with Google</button>
-    <button id="logout" style="display:none">Sign out</button>
-  </div>
-</header>
-<div class="shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="head"><div>Habits</div><button class="info-btn" id="habitsInfoBtn" aria-label="Habits help">ⓘ</button></div>
-    <div class="list" id="habitList"></div>
-    <button class="add" id="addHabitBtn">+ Add Habit</button>
-  </aside>
-  <div class="app card">
-    <div class="nav"><button id="prev">◀</button><div class="label" id="label"></div><button id="next">▶</button></div>
-    <div class="grid" id="grid"></div>
-    <div class="dash">
-      <div class="stat good"><div class="t">Successful days ✅</div><div class="v" id="doneV">0</div></div>
-      <div class="stat bad"><div class="t">Missed days ❌</div><div class="v" id="missV">0</div></div>
-      <div class="stat"><div class="t">Longest streak</div><div class="v" id="longV">0</div></div>
-      <div class="stat"><div class="t">Current streak</div><div class="v" id="currV">0</div></div>
-      <div class="stat"><div class="t">Success rate</div><div class="v" id="rateV">0%</div></div>
-    </div>
-  </div>
-</div>
-<div class="menu" id="menu"><button data-act="done">Mark done ✅</button><button data-act="miss">Mark missed ❌</button><button data-act="clear">Clear</button></div>
-<div class="picker" id="monthPicker" role="dialog" aria-modal="true" aria-label="Select month and year">
-  <div class="inner" id="mpInner">
-    <div class="head"><div class="h">Select month & year</div><button id="mpClose" aria-label="Close">✕</button></div>
-    <div class="months" id="mpMonths">
-      <button data-m="1">Jan</button><button data-m="2">Feb</button><button data-m="3">Mar</button><button data-m="4">Apr</button>
-      <button data-m="5">May</button><button data-m="6">Jun</button><button data-m="7">Jul</button><button data-m="8">Aug</button>
-      <button data-m="9">Sep</button><button data-m="10">Oct</button><button data-m="11">Nov</button><button data-m="12">Dec</button>
-    </div>
-    <div class="row">
-      <select id="mpMonth" aria-label="Month" style="display:none">
-        <option value="1">January</option>
-        <option value="2">February</option>
-        <option value="3">March</option>
-        <option value="4">April</option>
-        <option value="5">May</option>
-        <option value="6">June</option>
-        <option value="7">July</option>
-        <option value="8">August</option>
-        <option value="9">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
-      </select>
-      <select id="mpYear" aria-label="Year"></select>
-    </div>
-    <div class="actions">
-      <button id="mpApply">Go</button>
-      <button id="mpCancel">Cancel</button>
-    </div>
-  </div>
-</div>
-<!-- Habit Modal -->
-<div class="habit-modal" id="habitModal" role="dialog" aria-modal="true" aria-label="Add habit">
-  <div class="inner">
-    <div class="head"><div class="h">Add Habit</div><button id="hmClose" aria-label="Close">✕</button></div>
-    <div class="fields">
-      <label>Name
-        <input id="hmName" type="text" placeholder="e.g., Morning Run">
-      </label>
-      <label>Type
-        <select id="hmType">
-          <option value="binary">Binary (done/miss)</option>
-          <option value="step">Step-based (numeric)</option>
-          <option value="time">Time-based (minutes)</option>
-        </select>
-      </label>
-      <div class="row" id="hmGoalRow">
-        <label>Daily goal
-          <input id="hmGoal" type="number" min="1" value="30">
-        </label>
-      </div>
-      <div class="row">
-        <label>Color
-          <input id="hmColor" type="color" value="#93c5fd">
-        </label>
-      </div>
-      <label>Icon (emoji)
-        <input id="hmIcon" type="text" placeholder="e.g., 🏃">
-      </label>
-    </div>
-    <div class="actions">
-      <button id="hmCreate">Create</button>
-      <button id="hmCancel">Cancel</button>
-    </div>
-  </div>
-</div>
 
-<div class="habit-modal" id="editHabitModal" role="dialog" aria-modal="true" aria-label="Edit habit">
-  <div class="inner">
-    <div class="head"><div class="h">Edit Habit</div><button id="ehmClose" aria-label="Close">✕</button></div>
-    <div class="fields">
-      <label>Name
-        <input id="ehmName" type="text" placeholder="e.g., Morning Run">
-      </label>
-      <label>Type
-        <select id="ehmType">
-          <option value="binary">Binary (done/miss)</option>
-          <option value="step">Step-based (numeric)</option>
-          <option value="time">Time-based (minutes)</option>
-        </select>
-      </label>
-      <div class="row" id="ehmGoalRow">
-        <label>Daily goal
-          <input id="ehmGoal" type="number" min="1" value="30">
-        </label>
-      </div>
-      <div class="row">
-        <label>Color
-          <input id="ehmColor" type="color" value="#93c5fd">
-        </label>
-      </div>
-      <label>Icon (emoji)
-        <input id="ehmIcon" type="text" placeholder="e.g., 🏃">
-      </label>
-    </div>
-    <div class="actions">
-      <button id="ehmSave">Save Changes</button>
-      <button id="ehmDelete">Delete Habit</button>
-      <button id="ehmCancel">Cancel</button>
-    </div>
-  </div>
-</div>
+/* Login/Register shared styles */
+.login-card{background:#0c1526;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;width:min(360px,92vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.login-card h1{margin:0 0 4px 0;font-size:22px}
+.login-card input{all:unset;background:#0b1220;border:1px solid rgba(255,255,255,.08);padding:10px 12px;border-radius:10px;color:var(--text)}
+.login-card .actions{display:flex;flex-direction:column;gap:8px}
+.login-card button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+.login-card button:hover{transform:translateY(-1px);background:#0e1628}
+.login-card .muted{color:var(--muted);font-size:12px;min-height:16px}
+.login-card a{color:#93c5fd;text-decoration:none}
+.login-card a:hover{text-decoration:underline}
+.login-card input:focus{border-color:rgba(147,197,253,.6);box-shadow:0 0 0 2px rgba(59,130,246,.25)}
+.login-card.error{animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 
-<div class="habit-modal" id="progressModal" role="dialog" aria-modal="true" aria-label="Update progress">
-  <div class="inner">
-    <div class="head"><div class="h">Update Progress</div><button id="pmClose" aria-label="Close">✕</button></div>
-    <div class="fields">
-      <div class="row"><div id="pmInfo" style="opacity:.8"></div></div>
-      <label>Value
-        <input id="pmValue" type="number" min="0" inputmode="numeric" placeholder="Enter value">
-      </label>
-    </div>
-    <div class="actions">
-      <button id="pmSave">Save</button>
-      <button id="pmCancel">Cancel</button>
-    </div>
-  </div>
-</div>
+/* Toast common */
+.toast{font-size:14px}
+.habit.selected{background:#0e1628;border-color:rgba(147,197,253,.45);box-shadow:0 0 0 2px rgba(59,130,246,.25) inset}
+.habit.selected .name{color:var(--text)}
+.habit.selected .dot{box-shadow:0 0 0 2px rgba(147,197,253,.5)}
+.habit.selected .mini{border-color:rgba(147,197,253,.5)}
+.habit.selected .mini .bar{background:#60a5fa;box-shadow:0 0 8px rgba(147,197,253,.35)}
+.habit .edit-btn:hover{opacity:1;background:rgba(147,197,253,0.1)}
+.sidebar .add{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 10px;border-radius:10px;cursor:pointer}
+.sidebar .head{display:flex;align-items:center;justify-content:space-between}
+.sidebar .info-btn{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:8px;cursor:pointer;opacity:.85}
+.sidebar .info-btn:hover{opacity:1;background:#0e1628}
+@media (max-width:720px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;transform:translateY(120%);transition:.2s transform}
+  .sidebar.show{transform:translateY(0)}
+}
+/* Day progress bar for numeric/time */
+.day .prog{position:absolute;bottom:6px;left:8px;right:8px;height:6px;border-radius:4px;background:#0b1220;border:1px solid rgba(255,255,255,.08);overflow:hidden}
+.day .prog .bar{height:100%;background:#93c5fd;width:0%}
+.day .val{position:absolute;left:50%;top:50%;transform:translate(-50%,-40%);font-size:13px;color:var(--text);opacity:.9;pointer-events:none}
+/* Modals */
+.habit-modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(2,8,23,.5);backdrop-filter:blur(2px);z-index:70}
+.habit-modal.show{display:grid}
+.habit-modal .inner{background:#0c1526;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;min-width:320px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.habit-modal .head{display:flex;align-items:center;justify-content:space-between}
+.habit-modal .head .h{font-weight:700}
+.habit-modal .head button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:8px;cursor:pointer}
+.habit-modal .actions{display:flex;gap:8px;justify-content:flex-end}
+.habit-modal .actions button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 16px;border-radius:8px;cursor:pointer;transition:all 0.2s}
+.habit-modal .actions button:hover{background:#0e1628}
+.habit-modal .actions #ehmDelete{background:#dc2626;border-color:#dc2626;color:white}
+.habit-modal .actions #ehmDelete:hover{background:#b91c1c}
+.habit-modal input,.habit-modal select{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.12);padding:8px 10px;border-radius:10px;width:100%}
+.habit-modal .fields{display:flex;flex-direction:column;gap:8px}
+.habit-modal .row{display:flex;gap:8px;align-items:center}
 
-<div class="habit-modal" id="infoModal" role="dialog" aria-modal="true" aria-label="About Habits">
-  <div class="inner">
-    <div class="head"><div class="h">About Habits</div><button id="imClose" aria-label="Close">✕</button></div>
-    <div class="fields">
-      <p style="opacity:.9">Track different habit types:</p>
-      <ul style="margin:0 0 8px 18px;opacity:.85">
-        <li>Binary: mark days as ✅ done or ❌ miss</li>
-        <li>Step-based: enter a number toward your daily goal</li>
-        <li>Time-based: enter minutes spent</li>
-      </ul>
-      <p style="opacity:.9">Tips:</p>
-      <ul style="margin:0 0 8px 18px;opacity:.85">
-        <li>Use the ⋮ button to edit habit name, type, goal, color, icon</li>
-        <li>Click a date to mark (binary) or enter progress (numeric/time)</li>
-        <li>Your data is saved locally in your browser</li>
-      </ul>
-    </div>
-    <div class="actions">
-      <button id="imOk">Got it</button>
-    </div>
-  </div>
-</div>
+/* Login/Register shared styles */
+.login-card{background:#0c1526;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;width:min(360px,92vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.login-card h1{margin:0 0 4px 0;font-size:22px}
+.login-card input{all:unset;background:#0b1220;border:1px solid rgba(255,255,255,.08);padding:10px 12px;border-radius:10px;color:var(--text)}
+.login-card .actions{display:flex;flex-direction:column;gap:8px}
+.login-card button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
+.login-card button:hover{transform:translateY(-1px);background:#0e1628}
+.login-card .muted{color:var(--muted);font-size:12px;min-height:16px}
+.login-card a{color:#93c5fd;text-decoration:none}
+.login-card a:hover{text-decoration:underline}
+.login-card input:focus{border-color:rgba(147,197,253,.6);box-shadow:0 0 0 2px rgba(59,130,246,.25)}
+.login-card.error{animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 
-<div class="habit-modal" id="confirmModal" role="dialog" aria-modal="true" aria-label="Confirm delete">
-  <div class="inner">
-    <div class="head"><div class="h">Delete Habit</div><button id="cmClose" aria-label="Close">✕</button></div>
-    <div class="fields">
-      <p id="cmMsg" style="opacity:.9">Delete this habit?</p>
-    </div>
-    <div class="actions">
-      <button id="cmDelete" style="background:#dc2626;border-color:#dc2626;color:white">Delete</button>
-      <button id="cmCancel">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true"></div>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
-
-<!-- Main Application Module -->
-<script type="module" src="/index.js"></script>
-</body>
-</html>
+/* Toast common */
+.toast{font-size:14px}

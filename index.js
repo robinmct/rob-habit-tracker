@@ -15,7 +15,8 @@ import {
   getCurrentHabit, 
   addHabit,
   view,
-  getViewInfo
+  getViewInfo,
+  loadHabitsFromRemote
 } from './state.js';
 import { render } from './ui/render.js';
 import './ui/modals.js'; // Import for side effects (event listeners)
@@ -67,14 +68,19 @@ async function initApp() {
       }
   
       if (u) {
-        // Reload local store scoped to this user (prevents cross-user habits)
+        // Reload local store scoped to this user, then load remote habits
         loadStore();
-        const { year, month } = getViewInfo();
-        const hid = getCurrentHabit().id;
-        subscribeMonth(hid, year, month, null);
-        // Prefetch last 12 months to enable cross-month streaks
-        prefetchHistoryMonths(hid, year, month, 12).finally(() => {
-          render();
+        loadHabitsFromRemote().then(() => {
+          if (habits.length === 0) {
+            addHabit('Exercise', 'binary', 1, '#3b82f6', '💪');
+          }
+          const { year, month } = getViewInfo();
+          const hid = getCurrentHabit().id;
+          subscribeMonth(hid, year, month, null);
+          // Prefetch last 12 months to enable cross-month streaks
+          prefetchHistoryMonths(hid, year, month, 12).finally(() => {
+            render();
+          });
         });
       } else {
         // Reload shared store when signed out
@@ -86,14 +92,9 @@ async function initApp() {
 
     await getRedirectResult();
 
-    if (habits.length === 0) {
-      addHabit({
-        name: 'Exercise',
-        type: 'binary',
-        goal: 1,
-        color: '#3b82f6',
-        icon: '💪'
-      });
+    // Seed a default habit only when unauthenticated and no local habits exist
+    if (!user && habits.length === 0) {
+      addHabit('Exercise', 'binary', 1, '#3b82f6', '💪');
     }
 
     console.log('Habit Tracker initialized');

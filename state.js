@@ -1,5 +1,5 @@
 // State Management for Habits and Data
-import { user, remoteMonthByHabit, writeMarkToFirestore } from './firebase.js';
+import { user, remoteMonthByHabit, writeMarkToFirestore, upsertHabitMeta, deleteHabitMeta, fetchHabitsMeta } from './firebase.js';
 
 // Constants
 const STORAGE_KEY = 'habitTracker.v2';
@@ -54,6 +54,9 @@ export function loadStore() {
     habitData[def.id] = {};
     currentHabitId = def.id;
     saveStore();
+    if (user) {
+      upsertHabitMeta(def);
+    }
   }
 }
 
@@ -145,6 +148,9 @@ export function addHabit(name, type, goal, color, icon) {
   habitData[id] = {};
   currentHabitId = id;
   saveStore();
+  if (user) {
+    upsertHabitMeta(habit);
+  }
   
   return habit;
 }
@@ -156,6 +162,9 @@ export function updateHabit(habitId, updates) {
   
   Object.assign(habit, updates);
   saveStore();
+  if (user) {
+    upsertHabitMeta(habit);
+  }
   return true;
 }
 
@@ -171,6 +180,9 @@ export function deleteHabit(habitId) {
   }
   
   saveStore();
+  if (user) {
+    deleteHabitMeta(habitId);
+  }
   return true;
 }
 
@@ -338,4 +350,22 @@ function storageKey() {
   } catch (e) {
     return STORAGE_KEY;
   }
+}
+
+// Load habits from Firestore when signed in
+export function loadHabitsFromRemote() {
+  if (!user) return Promise.resolve(habits);
+  return fetchHabitsMeta().then(list => {
+    if (list && list.length) {
+      habits = list;
+      habitData = habitData || {};
+      if (!currentHabitId || !habits.find(h => h.id === currentHabitId)) {
+        currentHabitId = habits[0].id;
+      }
+      saveStore();
+    } else {
+      habits.forEach(h => upsertHabitMeta(h));
+    }
+    return habits;
+  });
 }

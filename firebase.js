@@ -13,6 +13,8 @@ let firestoreConfigured = false;
 // Remote data state (per habit for the current month)
 export let remoteMonthByHabit = {};
 let monthUnsub = null;
+// Habit metadata cache
+export let remoteHabits = [];
 
 // Initialize Firestore early and configure settings once
 export function initializeFirestore() {
@@ -29,6 +31,69 @@ export function initializeFirestore() {
     }
   }
   return fs;
+}
+
+// Fetch all habit metadata for the authenticated user
+export function fetchHabitsMeta() {
+  if (!user || !fs) return Promise.resolve([]);
+  return fs
+    .collection('users')
+    .doc(user.uid)
+    .collection('habits')
+    .get()
+    .then(snap => {
+      const list = [];
+      snap.forEach(doc => {
+        const d = doc.data() || {};
+        list.push({
+          id: doc.id,
+          name: d.name || 'Habit',
+          type: d.type || 'binary',
+          goal: d.goal != null ? d.goal : 1,
+          color: d.color || '#93c5fd',
+          icon: d.icon || '✅'
+        });
+      });
+      remoteHabits = list;
+      return list;
+    })
+    .catch(err => {
+      console.error('Failed to fetch habits meta:', err);
+      return [];
+    });
+}
+
+// Create or update habit metadata
+export function upsertHabitMeta(habit) {
+  if (!user || !fs || !habit || !habit.id) return Promise.resolve();
+  const ref = fs
+    .collection('users')
+    .doc(user.uid)
+    .collection('habits')
+    .doc(habit.id);
+  const payload = {
+    name: habit.name,
+    type: habit.type,
+    goal: habit.goal,
+    color: habit.color,
+    icon: habit.icon
+  };
+  return ref.set(payload, { merge: true }).catch(err => {
+    console.error('Failed to upsert habit meta:', err);
+  });
+}
+
+// Delete habit metadata
+export function deleteHabitMeta(habitId) {
+  if (!user || !fs || !habitId) return Promise.resolve();
+  const ref = fs
+    .collection('users')
+    .doc(user.uid)
+    .collection('habits')
+    .doc(habitId);
+  return ref.delete().catch(err => {
+    console.error('Failed to delete habit meta:', err);
+  });
 }
 
 // Subscribe to month data from Firestore for a specific habit

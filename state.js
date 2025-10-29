@@ -39,25 +39,6 @@ export function loadStore() {
     habitData = {};
     currentHabitId = null;
   }
-  
-  // Create default habit if none exist
-  if (!habits.length) {
-    const def = {
-      id: String(Date.now()),
-      name: 'My Habit',
-      type: 'binary',
-      goal: 1,
-      color: '#93c5fd',
-      icon: '✅'
-    };
-    habits = [def];
-    habitData[def.id] = {};
-    currentHabitId = def.id;
-    saveStore();
-    if (user) {
-      upsertHabitMeta(def);
-    }
-  }
 }
 
 export function saveStore() {

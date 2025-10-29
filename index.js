@@ -28,6 +28,8 @@ import './ui/modals.js'; // Import for side effects (event listeners)
 const loginBtn = document.getElementById('login');
 const logoutBtn = document.getElementById('logout');
 const userEl = document.getElementById('user');
+const toggleSidebarBtn = document.getElementById('toggleSidebar');
+const sidebarEl = document.getElementById('sidebar');
 if (loginBtn) {
   loginBtn.addEventListener('click', () => {
     window.location.replace('/login/');
@@ -40,12 +42,19 @@ if (logoutBtn) {
   });
 }
 
+// Mobile: toggle sidebar visibility
+if (toggleSidebarBtn && sidebarEl) {
+  toggleSidebarBtn.addEventListener('click', () => {
+    const isMobile = window.matchMedia('(max-width: 720px)').matches;
+    if (!isMobile) return;
+    const showing = sidebarEl.classList.toggle('show');
+    toggleSidebarBtn.setAttribute('aria-expanded', showing ? 'true' : 'false');
+  });
+}
+
 // Application initialization
 async function initApp() {
   try {
-    // Load local data first
-    loadStore();
-    
     // Initialize Firebase services
     initializeFirestore();
     
@@ -91,11 +100,6 @@ async function initApp() {
     });
 
     await getRedirectResult();
-
-    // Seed a default habit only when unauthenticated and no local habits exist
-    if (!user && habits.length === 0) {
-      addHabit('Exercise', 'binary', 1, '#3b82f6', '💪');
-    }
 
     console.log('Habit Tracker initialized');
 

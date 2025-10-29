@@ -11,6 +11,9 @@ header .auth #user{color:var(--muted);font-size:14px}
 header .auth #status{color:var(--muted);font-size:12px;margin-right:8px}
 header .auth button{background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background}
 header .auth button:hover{transform:translateY(-1px);background:#0e1628;box-shadow:0 8px 20px rgba(59,130,246,.15)}
+/* Mobile sidebar toggle (hidden on desktop) */
+.mobile-toggle{display:none;background:#0b1220;color:var(--text);border:1px solid rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.18s transform,.18s background;margin-left:12px}
+.mobile-toggle:hover{transform:translateY(-1px);background:#0e1628}
 .app{width:min(920px,100%);padding:16px}
 .card{background:var(--card);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04) inset;overflow:hidden}
 .nav{display:flex;align-items:center;gap:8px;padding:14px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -37,6 +40,14 @@ header .auth button:hover{transform:translateY(-1px);background:#0e1628;box-shad
 .menu button{all:unset;font-family:inherit;cursor:pointer;padding:8px 10px;border-radius:8px;color:var(--text)}
 .menu button:hover{background:#0e182b}
 @media (max-width:720px){.dash{grid-template-columns:repeat(2,1fr)}.nav .label{font-size:18px}.mark{font-size:20px}}
+/* Mobile layout refinements */
+@media (max-width:720px){
+  .mobile-toggle{display:inline-block}
+  header{font-size:20px;padding:12px}
+  .app{padding:12px}
+  .grid{gap:6px;padding:10px}
+  .day .num{font-size:11px}
+}
 button,input,select,textarea{font-family:inherit}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);background:#0c1526;border:1px solid rgba(255,255,255,.08);color:var(--text);padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s opacity,.25s transform;box-shadow:0 16px 48px rgba(0,0,0,.5);font-size:14px;z-index:100}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}

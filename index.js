@@ -28,8 +28,6 @@ import './ui/modals.js'; // Import for side effects (event listeners)
 const loginBtn = document.getElementById('login');
 const logoutBtn = document.getElementById('logout');
 const userEl = document.getElementById('user');
-const toggleSidebarBtn = document.getElementById('toggleSidebar');
-const sidebarEl = document.getElementById('sidebar');
 if (loginBtn) {
   loginBtn.addEventListener('click', () => {
     window.location.replace('/login/');
@@ -42,15 +40,6 @@ if (logoutBtn) {
   });
 }
 
-// Mobile: toggle sidebar visibility
-if (toggleSidebarBtn && sidebarEl) {
-  toggleSidebarBtn.addEventListener('click', () => {
-    const isMobile = window.matchMedia('(max-width: 720px)').matches;
-    if (!isMobile) return;
-    const showing = sidebarEl.classList.toggle('show');
-    toggleSidebarBtn.setAttribute('aria-expanded', showing ? 'true' : 'false');
-  });
-}
 
 // Application initialization
 async function initApp() {

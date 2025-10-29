@@ -212,13 +212,6 @@ export function renderSidebar() {
     el.addEventListener('click', () => {
       if (switchHabit(h.id)) {
         window.dispatchEvent(new CustomEvent('habitChanged'));
-        // Auto-hide mobile sidebar after selecting a habit
-        if (window.matchMedia('(max-width: 720px)').matches) {
-          const sb = document.getElementById('sidebar');
-          const tgl = document.getElementById('toggleSidebar');
-          if (sb) sb.classList.remove('show');
-          if (tgl) tgl.setAttribute('aria-expanded', 'false');
-        }
       }
     });
 
